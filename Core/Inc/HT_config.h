@@ -55,7 +55,7 @@
  * 24 must be divisible by DATA_INTERVAL to always take regular number of data
  * e.g. DATA_INTERVAL value cannot be 5 (24%5 != 0)
  */
-#define DATA_INTERVAL		3
+#define DATA_INTERVAL		2
 
 /*
  * maximum length of Asset ID

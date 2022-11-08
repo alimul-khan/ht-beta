@@ -28,8 +28,8 @@ uint8_t __io_putchar(uint8_t ch) {
 void HT_setup(void *pUserData)
 {
 	HAL_Delay(5000);
+	HT_LOG(LOG_INFO, "My Asset ID: %s\r\n", HT_ASSET_ID);
 
-	HT_LOG(LOG_INFO, "Initializing TOF sensor and Accelerometer\r\n");
 
 	init_ht_ctxt(&gHtCtxt, NULL);
 	init_ht_data(&gHtData, NULL);
@@ -113,9 +113,7 @@ void HT_loop(void *pUserData)
 			default:
 				break;
 			}
-		} else {
-			HAL_Delay(2000);
-		}
+		} else {HAL_Delay(2000);}
 	} else {
 		uint8_t numberOfTries = 0;
 		ht_status status;
@@ -127,13 +125,14 @@ void HT_loop(void *pUserData)
 			gHtData.data[gHtCtxt.nCurReading].temperature = 0.0;
 
 			numberOfTries++;
+			HT_LOG(LOG_DEBUG, "Numer of Tries %d\r\n", numberOfTries);
 
 			status = get_ht_data_block(&(gHtData.data[gHtCtxt.nCurReading]), NULL);
 
 			// because in case status is not success,
 			// we don't want to turn off everything and turn back on again the next moment
 			if(status != HT_SUCCESS) {
-				HAL_Delay (20000); //HT_Sleep(1);
+				HAL_Delay (2000); //HT_Sleep(1);
 			}
 		} while (status != HT_SUCCESS && numberOfTries < HT_MAXIMUM_NUMBER_OF_TRIES);
 
@@ -194,37 +193,19 @@ ht_status init_ht_ctxt(ht_ctxt_t *htCtxt, void *pUserData)
 #if HT_HAS_TOF
 ht_status init_tof(VL53L1_DEV *Dev, void *pUserData)
 {
-	if (Dev == NULL) {
-		HT_LOG(LOG_ERROR, "Dev is NULL\r\n");
-		return HT_INVALID_PARAM;
-	}
-
+	if (Dev == NULL) {		HT_LOG(LOG_ERROR, "Dev is NULL\r\n"); return HT_INVALID_PARAM;}
 	(*Dev)->I2cHandle = &hi2c1;
 	(*Dev)->I2cDevAddr = 0x52;
-
 	/*** VL53L1X Initialization Bootup ***/
 	HAL_GPIO_WritePin(TOF_P_EN_GPIO_Port, TOF_P_EN_Pin, GPIO_PIN_SET);
 	HAL_Delay(500);
 	HAL_GPIO_WritePin(TOF_SHUT_N_GPIO_Port, TOF_SHUT_N_Pin, GPIO_PIN_SET);
 	HAL_Delay(500);
 
-
-	if (VL53L1_WaitDeviceBooted((*Dev)) != VL53L1_ERROR_NONE) {
-		HT_LOG(LOG_ERROR, "VL53L1_WaitDeviceBooted failed.\r\n");
-		return HT_ERROR_TOF;
-	}
-
+	if (VL53L1_WaitDeviceBooted((*Dev)) != VL53L1_ERROR_NONE) {HT_LOG(LOG_ERROR, "VL53L1_WaitDeviceBooted failed.\r\n");return HT_ERROR_TOF;	}
 	// initialize vl53l1x communication parameters
-	if (VL53L1_DataInit((*Dev)) != VL53L1_ERROR_NONE) {
-		HT_LOG(LOG_ERROR, "VL53L1_DataInit failed.\r\n");
-		return HT_ERROR_TOF;
-	}
-
-	if (VL53L1_StaticInit((*Dev)) != VL53L1_ERROR_NONE) {
-		HT_LOG(LOG_ERROR, "VL53L1_StaticInit failed.\r\n");
-		return HT_ERROR_TOF;
-	}
-
+	if (VL53L1_DataInit((*Dev)) != VL53L1_ERROR_NONE) {HT_LOG(LOG_ERROR, "VL53L1_DataInit failed.\r\n");return HT_ERROR_TOF;	}
+	if (VL53L1_StaticInit((*Dev)) != VL53L1_ERROR_NONE) {HT_LOG(LOG_ERROR, "VL53L1_StaticInit failed.\r\n");return HT_ERROR_TOF;	}
 	return HT_SUCCESS;
 }
 
